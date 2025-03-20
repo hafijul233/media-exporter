@@ -2,13 +2,15 @@
 <?php
 
 use Amplify\MediaExporter\Commands\UploadFileToS3Command;
+use Dotenv\Dotenv;
 use Symfony\Component\Console\Application;
 use Amplify\MediaExporter\Commands\IndexFileCommand;
 
-define('EXPORTER_START', microtime(true));
-
 // Register the Composer autoloader...
 require __DIR__.'/vendor/autoload.php';
+
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->safeLoad();
 
 // Bootstrap application and handle the command...
 $console = new Application();
@@ -17,6 +19,4 @@ $console = new Application();
 $console->add(new IndexFileCommand);
 $console->add(new UploadFileToS3Command);
 
-$status = $console->run();
-
-exit($status);
+exit($console->run());

@@ -1,0 +1,37 @@
+{
+    "name": "amplify/media-exporter",
+    "description": "This is a cli media export program for amplify system",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Amplify\\MediaExporter\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Mohammad Hafijul Islam",
+            "email": "hafijul233@gmail.com"
+        }
+    ],
+    "require": {
+        "league/flysystem": "*",
+        "league/flysystem-aws-s3-v3": "*",
+        "symfony/console": "*",
+        "symfony/process": "*",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require-dev": {
+        "symfony/var-dumper": "^7.2"
+    }
+}
