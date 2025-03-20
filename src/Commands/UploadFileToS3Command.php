@@ -45,7 +45,7 @@ class UploadFileToS3Command extends Command
         $this->setName('upload-to-s3')
             ->setDescription("Upload all the index file to AS three bucket location.")
             ->addArgument('count', InputArgument::OPTIONAL, 'Index for a Directory to Upload from folders.json', 0)
-            ->addArgument('destination', InputArgument::OPTIONAL, 'Index for a Directory to Upload from folders.json', '/');
+            ->addArgument('destination', InputArgument::OPTIONAL, 'Index for a Directory to Upload from folders.json', null);
     }
 
     /**
@@ -59,6 +59,10 @@ class UploadFileToS3Command extends Command
         $failedDirectory = __DIR__ . '/../../data/failed';
         $folderIndexPath = __DIR__ . '/../../data/folders.json';
         $prefix = $input->getArgument('destination');
+
+        if ($prefix == null) {
+            $prefix = $_ENV['S3_ROOT_PATH'];
+        }
 
         try {
 
