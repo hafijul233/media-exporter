@@ -75,33 +75,41 @@ class UploadFileToS3Command extends Command
             $completeFileHandler = fopen("{$completeDirectory}/{$target}.txt", "a+") or throw new \ErrorException("<error> ERROR </error> Unable to read file at <comment>[{$completeDirectory}/{$target}.txt]</comment>");
             $failedFileHandler = fopen("{$failedDirectory}/{$target}.txt", "a+") or throw new \ErrorException("<error> ERROR </error> Unable to read file at <comment>[{$failedDirectory}/{$target}.txt]</comment>");
 
-            $s3Url = "https://{$_ENV['S3_BUCKET']}.s3.{$_ENV['S3_DEFAULT_REGION']}.amazonaws.com/{$prefix}/";
+            $s3Url = "https://{$_ENV['S3_BUCKET']}.s3.{$_ENV['S3_DEFAULT_REGION']}.amazonaws.com/{$prefix}";
 
-            $output->writeln("<info> INFO </info> Uploading from <comment>[{$folders['root']}]</comment> to <comment>[{$s3Url}]</comment>:");
+            ($target == '0')
+                ? $output->writeln("<info>INFO </info>Uploading from <comment>[{$folders['root']}]</comment> to <comment>[{$s3Url}]</comment>:")
+                : $output->writeln("<info>INFO </info>Uploading from <comment>[{$folders['root']}" . DIRECTORY_SEPARATOR . "{$folders['folders'][$target]['folder']}]</comment> to <comment>[{$s3Url}]</comment>:");
 
             while (!feof($entryFileHandler)) {
 
                 $sourcePath = trim(fgets($entryFileHandler));
 
-                $relativePath = str_replace($folders['root'], '', $sourcePath);
+                if (!empty($sourcePath)) {
 
-                if ($this->s3->fileExists($prefix . DIRECTORY_SEPARATOR . $relativePath)) {
-                    fwrite($completeFileHandler, "SKIP {$sourcePath}\n");
-                    $output->writeln("<fg=yellow>SKIP</> Target <comment>[{$prefix}/{$relativePath}]</comment> already exist.");
-                    continue;
+                    $relativePath = str_replace($folders['root'], '', $sourcePath);
+
+                    $targetPath = $prefix . DIRECTORY_SEPARATOR . $relativePath;
+                    $targetUrl = $s3Url.'/' . str_replace('\\', '/', ltrim($relativePath, '\\/'));
+
+                    if ($this->s3->fileExists($targetPath)) {
+                        fwrite($completeFileHandler, "SKIP {$sourcePath}\n");
+                        $output->writeln("<fg=yellow>SKIP </>URL<comment>[{$targetUrl}]</comment> already exist.");
+                        continue;
+                    }
+
+                    $stream = fopen($sourcePath, 'r') or throw new \ErrorException("<error> ERROR </error> Unable to read file at <comment>[{$sourcePath}]</comment>");
+                    $this->s3->writeStream($prefix . DIRECTORY_SEPARATOR . $relativePath, $stream);
+                    fclose($stream);
+                    fwrite($completeFileHandler, "DONE {$sourcePath}\n");
+                    $output->writeln("<info>DONE</info>URL<comment>[{$targetUrl}]</comment> uploaded.");
                 }
-
-                $stream = fopen($sourcePath, 'r');
-                $this->s3->writeStream($prefix . DIRECTORY_SEPARATOR . $relativePath, $stream);
-                fclose($stream);
-                fwrite($completeFileHandler, "SKIP {$sourcePath}\n");
-                $output->writeln("<info>DONE</info> Target <comment>[{$prefix}/{$relativePath}]</comment> uploaded.");
             }
             fclose($entryFileHandler);
             fclose($completeFileHandler);
             fclose($failedFileHandler);
 
-            $output->writeln("<info> DONE </info> Uploading from <comment>[{$folders['root']}]</comment> completed.");
+            $output->writeln("<info>DONE </info> Uploading from <comment>[{$folders['root']}]</comment> completed.");
 
             return self::SUCCESS;
 
