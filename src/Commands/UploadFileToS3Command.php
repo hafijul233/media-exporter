@@ -26,6 +26,9 @@ class UploadFileToS3Command extends Command
             'credentials' => [
                 'key' => $_ENV['S3_ACCESS_KEY_ID'],
                 'secret' => $_ENV['S3_SECRET_ACCESS_KEY'],
+            ],
+            "http" => [
+                "verify" => false,
             ]
         ]);
 
@@ -89,27 +92,30 @@ class UploadFileToS3Command extends Command
 
                     $relativePath = str_replace($folders['root'], '', $sourcePath);
 
-                    $targetPath = $prefix . DIRECTORY_SEPARATOR . $relativePath;
-                    $targetUrl = $s3Url.'/' . str_replace('\\', '/', ltrim($relativePath, '\\/'));
+                    $relativePath = str_replace('\\', '/', ltrim($relativePath, '\\/'));
+
+                    $targetPath = "{$prefix}/{$relativePath}";
+                    $targetUrl = "{$s3Url}/{$targetPath}";
 
                     if ($this->s3->fileExists($targetPath)) {
                         fwrite($completeFileHandler, "SKIP {$sourcePath}\n");
-                        $output->writeln("<fg=yellow>SKIP </>URL<comment>[{$targetUrl}]</comment> already exist.");
+                        $output->writeln("<fg=yellow>SKIP </>URL <comment>[{$targetUrl}]</comment> already exist.");
                         continue;
                     }
 
                     $stream = fopen($sourcePath, 'r') or throw new \ErrorException("<error> ERROR </error> Unable to read file at <comment>[{$sourcePath}]</comment>");
-                    $this->s3->writeStream($prefix . DIRECTORY_SEPARATOR . $relativePath, $stream);
+                    $this->s3->writeStream($targetPath, $stream);
                     fclose($stream);
                     fwrite($completeFileHandler, "DONE {$sourcePath}\n");
-                    $output->writeln("<info>DONE</info>URL<comment>[{$targetUrl}]</comment> uploaded.");
+                    $output->writeln("<info>DONE </info>URL <comment>[{$targetUrl}]</comment> uploaded.");
                 }
             }
+
             fclose($entryFileHandler);
             fclose($completeFileHandler);
             fclose($failedFileHandler);
 
-            $output->writeln("<info>DONE </info> Uploading from <comment>[{$folders['root']}]</comment> completed.");
+            $output->writeln("<info>DONE </info>Uploading from <comment>[{$folders['root']}]</comment> completed.");
 
             return self::SUCCESS;
 
